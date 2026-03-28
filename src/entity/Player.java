@@ -22,7 +22,8 @@ public class Player extends Entity{
 	public int maxHP;
 	public int currentHP;
 	public int damage = 10;
-	
+	int fireCooldown = 0;
+	int fireCooldownMax = 300; // 5 seconds
 	
 	public Player(GamePanel gp , KeyHandler keyH) {
 		this.gp = gp;
@@ -79,38 +80,64 @@ public class Player extends Entity{
     }
 
 	public void update() {
+
+	    // normal attack
 		if(keyH.spacePressed) {
 
 		    if(gp.boss != null) {
-		        gp.boss.takeDamage(damage);
-		        System.out.println("Boss HP: " + gp.boss.currentHP);
+
+		        int dx = Math.abs(worldX - gp.boss.worldX);
+		        int dy = Math.abs(worldY - gp.boss.worldY);
+
+		        // normal attack range
+		        if(dx < gp.tileSize * 2 && dy < gp.tileSize * 2) {
+		            gp.boss.takeDamage(damage);
+		            System.out.println("🗡️ Hit!");
+		        } else {
+		            System.out.println("❌ Too far!");
+		        }
 		    }
 
-		    keyH.spacePressed = false; 
+		    keyH.spacePressed = false;
 		}
 
+	    // fire
+		if(keyH.firePressed && fireCooldown == 0) {
+
+		    Fireball f = new Fireball(
+		        gp,
+		        worldX + gp.tileSize/2,
+		        worldY + gp.tileSize/2,
+		        direction
+		    );
+
+		    gp.fireballs.add(f);
+
+		    System.out.println("🔥 Fireball!");
+
+		    fireCooldown = fireCooldownMax; // count cooldown
+
+		    keyH.firePressed = false;
+		}
+		if(fireCooldown > 0) {
+		    fireCooldown--;
+		}
+
+	    // movement
 	    if (keyH.upPressed || keyH.downPressed || 
 	        keyH.leftPressed || keyH.rightPressed) {
 
-	        if(keyH.upPressed) {
-	            direction = "up";
-	        }
-	        else if(keyH.downPressed) {
-	            direction = "down";
-	        }
-	        else if(keyH.leftPressed) {
-	            direction = "left";
-	        }
-	        else if(keyH.rightPressed) {
-	            direction = "right";
-	        }
+	        if(keyH.upPressed) direction = "up";
+	        else if(keyH.downPressed) direction = "down";
+	        else if(keyH.leftPressed) direction = "left";
+	        else if(keyH.rightPressed) direction = "right";
 
-	        //  collision
+	        // collision
 	        collisionOn = false;
 	        gp.cChecker.checkTile(this);
 
-	        //  movement
-	        if(collisionOn == false) {
+	        // movement
+	        if(!collisionOn) {
 	            switch(direction) {
 	                case "up": worldY -= speed; break;
 	                case "down": worldY += speed; break;
@@ -118,23 +145,18 @@ public class Player extends Entity{
 	                case "right": worldX += speed; break;
 	            }
 	        }
-	        
 
-	        
 	        int col = (worldX + gp.tileSize/2) / gp.tileSize;
 	        int row = (worldY + gp.tileSize/2) / gp.tileSize;
-	        
-	       // System.out.println("col: " + col + " row: " + row);
 
 	        if (col == 23 && row == 7) {
-	        	System.out.println(" PORTAL HIT");
+	            System.out.println("PORTAL HIT");
 	            gp.tileM.loadMap("/maps/world02.txt");
-	            
+
 	            gp.boss = new Boss(gp);
 
 	            worldX = gp.tileSize * 10;
 	            worldY = gp.tileSize * 40;
-
 	            return;
 	        }
 
@@ -144,16 +166,19 @@ public class Player extends Entity{
 	            spriteNum = (spriteNum == 1) ? 2 : 1;
 	            spriteCounter = 0;
 	        }
-	        
 	    }
+
 	    if(currentHP <= 0) {
 	        gp.gameState = gp.gameOverState;
 	    }
 	}
+	
+	
 	public void draw(Graphics2D g2) {
 		
 		g2.setColor(Color.white);
 		g2.drawString("HP: " + currentHP, 20, 20);
+		g2.drawString("Fire CD: " + fireCooldown/60, 20, 40);
 		
 		BufferedImage image = null;
 		switch(direction) {

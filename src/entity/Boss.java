@@ -12,6 +12,9 @@ public class Boss extends Entity {
     int attackCooldown = 0;
     int attackInterval = 60;
 
+    boolean isOnFire = false;
+    int fireDuration = 0;
+
     public Boss(GamePanel gp) {
         this.gp = gp;
         
@@ -20,53 +23,73 @@ public class Boss extends Entity {
 
         speed = 1;
 
-        maxHP = 200;
+        maxHP = 500;
         currentHP = maxHP;
     }
+
+    // 🔥 Overloading + fire effect
+    @Override
+    public void takeDamage(int amount, String type) {
+
+        if(type.equals("fire")) {
+            amount += 5;
+            isOnFire = true;
+            fireDuration = 30;
+        }
+
+        currentHP -= amount;
+
+        if(currentHP < 0) {
+            currentHP = 0;
+        }
+    }
+
     public void update() {
 
-        
-        if(gp.player.worldX < worldX) {
-            worldX -= speed;
-        }
-        if(gp.player.worldX > worldX) {
-            worldX += speed;
-        }
-        if(gp.player.worldY < worldY) {
-            worldY -= speed;
-        }
-        if(gp.player.worldY > worldY) {
-            worldY += speed;
-        }
+        //follow player
+        if(gp.player.worldX < worldX) worldX -= speed;
+        if(gp.player.worldX > worldX) worldX += speed;
+        if(gp.player.worldY < worldY) worldY -= speed;
+        if(gp.player.worldY > worldY) worldY += speed;
 
-        
         int dx = Math.abs(gp.player.worldX - worldX);
         int dy = Math.abs(gp.player.worldY - worldY);
 
-        if(attackCooldown > 0) {
-            attackCooldown--;
-        }
+        if(attackCooldown > 0) attackCooldown--;
 
         if(dx < gp.tileSize && dy < gp.tileSize) {
-
             if(attackCooldown == 0) {
-                gp.player.takeDamage(15); 
-
-                attackCooldown = attackInterval; 
+                gp.player.takeDamage(15);
+                attackCooldown = attackInterval;
             }
         }
+
         if(currentHP <= 0) {
             gp.gameState = gp.winState;
         }
+
+        
+        if(isOnFire) {
+            fireDuration--;
+
+            if(fireDuration <= 0) {
+                isOnFire = false;
+            }
         }
- 
+    }
 
     public void draw(Graphics2D g2) {
 
         int screenX = worldX - gp.player.worldX + gp.player.screenX;
         int screenY = worldY - gp.player.worldY + gp.player.screenY;
 
-        g2.setColor(Color.red);
+        // fire effect
+        if(isOnFire) {
+            g2.setColor(Color.orange);
+        } else {
+            g2.setColor(Color.red);
+        }
+
         g2.fillRect(screenX, screenY, gp.tileSize, gp.tileSize);
 
         // HP bar

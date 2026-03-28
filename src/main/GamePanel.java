@@ -4,12 +4,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
 import entity.Player;
 import tile.TileManager;
 import entity.Boss;
+import entity.Fireball;
 
 public class GamePanel extends JPanel implements Runnable{
 	
@@ -44,6 +46,7 @@ public class GamePanel extends JPanel implements Runnable{
 	Thread gameThread;
 	public Player player = new Player(this,keyH);
 	public Boss boss;
+	public ArrayList<Fireball> fireballs = new ArrayList<>();
 
 	
 	public GamePanel () {
@@ -54,7 +57,6 @@ public class GamePanel extends JPanel implements Runnable{
 		this.addKeyListener(keyH);
 		this.setFocusable(true);
 		gameState = playState;
-		boss = new Boss(this);
 		boss = null;
 	}
 	
@@ -118,8 +120,16 @@ public class GamePanel extends JPanel implements Runnable{
 	        if(boss != null) {
 	            boss.update();
 	        }
-	    }
-	    if(gameState == gameOverState && keyH.enterPressed) {
+	        for(int i = 0; i < fireballs.size(); i++) {
+	            Fireball f = fireballs.get(i);
+	            f.update();
+
+	            if(!f.alive) {
+	                fireballs.remove(i);
+	                i--;
+	            }
+	        }
+	    }	    if(gameState == gameOverState && keyH.enterPressed) {
 
 	        // Player reset
 	        player.worldX = tileSize * 23;
@@ -167,6 +177,9 @@ public class GamePanel extends JPanel implements Runnable{
 		if(boss != null) {
 	        boss.draw(g2);
 	    }
+		for(Fireball f : fireballs) {
+		    f.draw(g2);
+		}
 		
 		player.draw(g2);
 		

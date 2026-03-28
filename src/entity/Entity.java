@@ -22,6 +22,18 @@ public class Entity {
 	        currentHP = 0;
 	    }
 	}
+	public void takeDamage(int amount, String type) {
+
+	    if(type.equals("fire")) {
+	        amount += 5;
+	    }
+
+	    currentHP -= amount;
+
+	    if(currentHP < 0) {
+	        currentHP = 0;
+	    }
+	}
 	
 	
 
